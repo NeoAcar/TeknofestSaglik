@@ -10,10 +10,17 @@ from sklearn.metrics import accuracy_score, roc_auc_score, precision_score, reca
 from torch.utils.data import DataLoader
 from data.dataset import StrokeDataset
 from models.biomedclip_encoder import ImageEncoderWithMLP
+from datetime import datetime
+
+timestamp = datetime.now().strftime("%Y_%m_%d__%H_%M_%S")
 
 val_csv = "data/data_paths/test_data.csv"
-model_path = "checkpoints\stroke_model_iter006.pt"
-log_path = "evaluation_logs.csv"
+
+
+model_path = "checkpoints/20250323_194943/stroke_model_iter020.pt"
+log_dir = f"eval_logs/{timestamp}/"
+os.makedirs(log_dir, exist_ok=True)
+log_path = f"{log_dir}/evaluation_logs.csv"
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

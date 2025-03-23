@@ -10,8 +10,10 @@ from open_clip.factory import HF_HUB_PREFIX, _MODEL_CONFIGS
 
 
 class ImageEncoderWithMLP(nn.Module):
-    def __init__(self, config_path, checkpoint_path, embed_dim=512):
+    def __init__(self, config_path, checkpoint_path, frozen_encoder=True, embed_dim=512):
         super().__init__()
+        
+        self.frozen_encoder = frozen_encoder
 
 
         with open(config_path, "r") as f:
@@ -41,7 +43,10 @@ class ImageEncoderWithMLP(nn.Module):
 
 
     def forward(self, image):
-        with torch.no_grad():
+        if self.frozen_encoder:
+            with torch.no_grad():
+                features = self.encoder(image)
+        else:
             features = self.encoder(image)
         out = self.classifier(features)
         return out
