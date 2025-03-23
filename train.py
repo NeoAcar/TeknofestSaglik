@@ -6,19 +6,28 @@ from torch import nn
 from torch.utils.data import DataLoader
 from sklearn.metrics import accuracy_score, roc_auc_score, precision_score, recall_score, f1_score
 from data.dataset import StrokeDataset
+from data.transforms import get_stroke_dataset_transforms
 from models.biomedclip_encoder import ImageEncoderWithMLP
 import pandas as pd
 from tqdm import tqdm
+from datetime import datetime
 
 train_csv = "data/data_paths/train_data.csv"
 val_csv = "data/data_paths/val_data.csv"
-checkpoint_dir = "checkpoints"
-os.makedirs(checkpoint_dir, exist_ok=True)
-os.makedirs("logs", exist_ok=True)
 
-batch_size = 64
+timestamp = datetime.now().strftime("%Y_%m_%d__%H_%M_%S")
+
+checkpoint_dir = f"checkpoints/{timestamp}"
+log_dir = f"logs/{timestamp}"
+
+os.makedirs(checkpoint_dir, exist_ok=True)
+os.makedirs(log_dir, exist_ok=True)
+
+frozen_encoder = False
+batch_size = 128
 num_epochs = 20
 lr = 1e-4
+weight_decay = 1e-4
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def load_data(csv_path):
@@ -30,24 +39,30 @@ val_paths, val_labels = load_data(val_csv)
 
 model = ImageEncoderWithMLP(
     config_path="configs/open_clip_config.json",
-    checkpoint_path="checkpoints/open_clip_pytorch_model.bin"
+    checkpoint_path="checkpoints/open_clip_pytorch_model.bin",
+    frozen_encoder=frozen_encoder
 ).to(device)
 
-for param in model.encoder.parameters():
-    param.requires_grad = False
 
-train_dataset = StrokeDataset(train_paths, train_labels, transform=model.get_preprocess())
-val_dataset = StrokeDataset(val_paths, val_labels, transform=model.get_preprocess())
+if frozen_encoder:
+    for param in model.encoder.parameters():
+        param.requires_grad = False
+
+custom_transforms = get_stroke_dataset_transforms()
+
+train_dataset = StrokeDataset(train_paths, train_labels, transform=model.get_preprocess(), custom_transform=custom_transforms["train"])
+val_dataset = StrokeDataset(val_paths, val_labels, transform=model.get_preprocess(), custom_transform=custom_transforms["val"])
 
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
 criterion = nn.BCEWithLogitsLoss()
-optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=lr)
+optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=lr, weight_decay=weight_decay)
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", patience=3, factor=0.5)
 
-log_path = "logs/training_logs.csv"
-iter_details_path = "logs/training_iter_details.csv"
+
+log_path = f"{log_dir}/training_log.csv"
+iter_details_path = f"{log_dir}/training_iter_details.csv"
 write_header = not os.path.exists(log_path)
 
 i = 0

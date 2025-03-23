@@ -4,10 +4,11 @@ from torch.utils.data import Dataset
 from PIL import Image
 import pydicom
 import numpy as np
+import torchvision.transforms as transforms
 
 
 class StrokeDataset(Dataset):
-    def __init__(self, image_paths, labels, transform=None):
+    def __init__(self, image_paths, labels, transform=None, custom_transform=None):
         """
         image_paths: list of file paths (.png or .dcm)
         labels: list of binary labels (0 or 1)
@@ -16,8 +17,16 @@ class StrokeDataset(Dataset):
         self.image_paths = image_paths
         self.labels = labels
         self.transform = transform
+        self.custom_transform = custom_transform
 
-        
+        self.combined_transform = None
+        if self.transform and self.custom_transform:
+            self.combined_transform = transforms.Compose([self.transform, self.custom_transform])
+        elif self.transform:
+            self.combined_transform = self.transform
+        elif self.custom_transform:
+            self.combined_transform = self.custom_transform
+            
     def __len__(self):
         return len(self.image_paths)
 
@@ -31,7 +40,9 @@ class StrokeDataset(Dataset):
         else:
             img = Image.open(path).convert("RGB")
 
-        if self.transform:
+        if self.combined_transform:
+            img = self.combined_transform(img)
+        elif self.transform:
             img = self.transform(img)
 
         return img, torch.tensor(label, dtype=torch.float32)

@@ -4,7 +4,7 @@ import os
 
 # 🔧 CSV dosyasının yolu (istediğini buradan seç)
 #log_path = "logs/training_logs.csv"
-log_path = "logs/training_iter_details.csv"
+log_path = "logs/2025_03_23__20_35_15/training_iter_details.csv"
 # log_path = "logs/evaluation_logs.csv"
 
 assert os.path.exists(log_path), f"{log_path} bulunamadı!"
