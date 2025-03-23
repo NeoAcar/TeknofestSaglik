@@ -17,7 +17,7 @@ timestamp = datetime.now().strftime("%Y_%m_%d__%H_%M_%S")
 val_csv = "data/data_paths/test_data.csv"
 
 
-model_path = "checkpoints/20250323_194943/stroke_model_iter020.pt"
+model_path = "checkpoints/2025_03_23__21_16_24/stroke_model_iter020.pt"
 log_dir = f"eval_logs/{timestamp}/"
 os.makedirs(log_dir, exist_ok=True)
 log_path = f"{log_dir}/evaluation_logs.csv"
@@ -88,7 +88,7 @@ with open(log_path, mode="a", newline="") as f:
         os.path.basename(model_path), accuracy, precision, recall, f1, roc_auc, confidence
     ])
 
-
+q
 cm = confusion_matrix(all_labels, all_preds)
 plt.figure(figsize=(6, 5))
 sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=["Non-Stroke", "Stroke"], yticklabels=["Non-Stroke", "Stroke"])

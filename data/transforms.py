@@ -11,8 +11,8 @@ def get_stroke_dataset_transforms():
         transforms.RandomHorizontalFlip(),  # Random horizontal flip
         transforms.RandomRotation(5),  # Random rotation
         transforms.Lambda(lambda img: img + torch.randn_like(img) * 0.03),
-        transforms.RandomAffine(0, shear=5, scale=(0.8, 1.2)),  # Random affine transformation
-        transforms.RandomPerspective(distortion_scale=0.2, p=0.3),  # Random perspective transformation
+        transforms.RandomAffine(0, shear=5, scale=(0.9, 1.1)),  # Random affine transformation
+        transforms.RandomPerspective(distortion_scale=0.1, p=0.3),  # Random perspective transformation
         # transforms.ToTensor(),  # Convert image to tensor
         # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # Normalize with ImageNet stats
     ])

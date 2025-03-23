@@ -24,9 +24,10 @@ os.makedirs(checkpoint_dir, exist_ok=True)
 os.makedirs(log_dir, exist_ok=True)
 
 frozen_encoder = False
-batch_size = 64
+batch_size = 128
 num_epochs = 20
 lr = 1e-4
+weight_decay = 1e-4
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def load_data(csv_path):
@@ -56,7 +57,7 @@ train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
 criterion = nn.BCEWithLogitsLoss()
-optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=lr)
+optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=lr, weight_decay=weight_decay)
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", patience=3, factor=0.5)
 
 
