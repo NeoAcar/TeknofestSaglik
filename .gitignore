@@ -4,6 +4,5 @@ __pycache__/
 .env
 checkpoints/
 configs/
-data/
 inme/
 logs/
