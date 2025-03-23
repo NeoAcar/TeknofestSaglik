@@ -1,90 +1,91 @@
+import os
+import csv
 import torch
-import torch.nn as nn
-from torch.utils.data import DataLoader
-from sklearn.metrics import accuracy_score, roc_auc_score, confusion_matrix
+import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-import numpy as np
-import csv
-import os
-
-from models.biomedclip_encoder import ImageEncoderWithMLP
+from tqdm import tqdm
+from sklearn.metrics import accuracy_score, roc_auc_score, precision_score, recall_score, f1_score, confusion_matrix
+from torch.utils.data import DataLoader
 from data.dataset import StrokeDataset
+from models.biomedclip_encoder import ImageEncoderWithMLP
 
-
-config_path = "configs/biomedclip_config.json"
-checkpoint_path = "checkpoints/open_clip_pytorch_model.bin"
-model_weights = "checkpoints/stroke_model_epoch20.pt"  # örnek
-image_paths = [...]  # test görüntüleri
-labels = [...]        # test etiketleri
-
-batch_size = 8
-log_csv_path = "evaluation_logs.csv"
+val_csv = "data/data_paths/test_data.csv"
+model_path = "checkpoints\stroke_model_iter006.pt"
+log_path = "evaluation_logs.csv"
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f"device: {device}")
 
+def load_data(csv_path):
+    df = pd.read_csv(csv_path)
+    return df["filepath"].tolist(), df["label"].tolist()
 
-model = ImageEncoderWithMLP(config_path, checkpoint_path).to(device)
-model.load_state_dict(torch.load(model_weights, map_location=device))
+val_paths, val_labels = load_data(val_csv)
+
+model = ImageEncoderWithMLP(
+    config_path="configs/open_clip_config.json",
+    checkpoint_path="checkpoints/open_clip_pytorch_model.bin"
+).to(device)
+model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
 model.eval()
 
+for param in model.encoder.parameters():
+    param.requires_grad = False
 
-dataset = StrokeDataset(image_paths, labels, transform=model.get_preprocess())
-dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
 
-all_preds = []
-all_labels = []
-all_probs = []
+val_dataset = StrokeDataset(val_paths, val_labels, transform=model.get_preprocess())
+val_loader = DataLoader(val_dataset, batch_size=64, shuffle=False)
+
+
+all_preds, all_labels, all_confs = [], [], []
 
 with torch.no_grad():
-    for images, labels_batch in dataloader:
+    for images, labels_batch in tqdm(val_loader):
         images = images.to(device)
         labels_batch = labels_batch.to(device).unsqueeze(1)
 
         outputs = model(images)
         probs = torch.sigmoid(outputs).cpu().numpy()
         preds = (probs > 0.5).astype(int)
+        confs = np.abs(probs - 0.5) * 2
 
-        all_preds.extend(preds)
-        all_probs.extend(probs)
-        all_labels.extend(labels_batch.cpu().numpy())
-
-
-acc = accuracy_score(all_labels, all_preds)
-roc_auc = roc_auc_score(all_labels, all_probs)
-cm = confusion_matrix(all_labels, all_preds)
-
-print(f"Accuracy: {acc:.4f}")
-print(f"ROC AUC:  {roc_auc:.4f}")
-print("Confusion Matrix:")
-print(cm)
+        all_preds.extend(preds.flatten())
+        all_labels.extend(labels_batch.cpu().numpy().flatten())
+        all_confs.extend(confs.flatten())
 
 
-confidences = np.abs(np.array(all_probs) - 0.5) * 2
-plt.hist(confidences, bins=20, color='skyblue', edgecolor='black')
-plt.title("Model Confidence Distribution")
-plt.xlabel("Eminlik")
-plt.ylabel("Örnek Sayısı")
-plt.grid(True)
-plt.tight_layout()
-plt.show()
+accuracy = accuracy_score(all_labels, all_preds)
+precision = precision_score(all_labels, all_preds, zero_division=0)
+recall = recall_score(all_labels, all_preds, zero_division=0)
+f1 = f1_score(all_labels, all_preds, zero_division=0)
+roc_auc = roc_auc_score(all_labels, all_preds)
+confidence = np.mean(all_confs)
+
+print(f"Accuracy : {accuracy:.4f}")
+print(f"Precision: {precision:.4f}")
+print(f"Recall   : {recall:.4f}")
+print(f"F1 Score : {f1:.4f}")
+print(f"ROC AUC  : {roc_auc:.4f}")
+print(f"Avg Conf : {confidence:.4f}")
 
 
-sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
-plt.title("Confusion Matrix")
-plt.xlabel("Predicted")
-plt.ylabel("True")
-plt.tight_layout()
-plt.show()
-
-
-header = ["model", "accuracy", "roc_auc", "avg_confidence"]
-data_row = [os.path.basename(model_weights), f"{acc:.4f}", f"{roc_auc:.4f}", f"{np.mean(confidences):.4f}"]
-
-write_header = not os.path.exists(log_csv_path)
-with open(log_csv_path, mode="a", newline="") as f:
+write_header = not os.path.exists(log_path)
+with open(log_path, mode="a", newline="") as f:
     writer = csv.writer(f)
     if write_header:
-        writer.writerow(header)
-    writer.writerow(data_row)
+        writer.writerow([
+            "model", "accuracy", "precision", "recall", "f1_score", "roc_auc", "avg_confidence"
+        ])
+    writer.writerow([
+        os.path.basename(model_path), accuracy, precision, recall, f1, roc_auc, confidence
+    ])
+
+
+cm = confusion_matrix(all_labels, all_preds)
+plt.figure(figsize=(6, 5))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=["Non-Stroke", "Stroke"], yticklabels=["Non-Stroke", "Stroke"])
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.title("Confusion Matrix")
+plt.show()

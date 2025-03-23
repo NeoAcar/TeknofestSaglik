@@ -1,58 +1,28 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import os
 
-log_path = "logs/training_logs.csv"
+# 🔧 CSV dosyasının yolu (istediğini buradan seç)
+#log_path = "logs/training_logs.csv"
+log_path = "logs/training_iter_details.csv"
+# log_path = "logs/evaluation_logs.csv"
+
+assert os.path.exists(log_path), f"{log_path} bulunamadı!"
+
+# CSV'yi oku
 df = pd.read_csv(log_path)
 
-plt.figure()
-plt.plot(df["epoch"], df["train_loss"], label="Train")
-plt.plot(df["epoch"], df["val_loss"], label="Val")
-plt.title("Loss over Epochs")
-plt.xlabel("Epoch")
-plt.ylabel("Loss")
-plt.legend()
-plt.grid(True)
-plt.tight_layout()
-plt.show()
+# X ekseni olarak ilk sütunu al (epoch, iter, model vs)
+x_col = df.columns[0]
+y_cols = df.columns[1:]
 
-plt.figure()
-plt.plot(df["epoch"], df["train_acc"], label="Train")
-plt.plot(df["epoch"], df["val_acc"], label="Val")
-plt.title("Accuracy over Epochs")
-plt.xlabel("Epoch")
-plt.ylabel("Accuracy")
-plt.legend()
-plt.grid(True)
-plt.tight_layout()
-plt.show()
-
-plt.figure()
-plt.plot(df["epoch"], df["train_grad_norm"], label="Train Grad Norm")
-plt.title("Average Gradient Norm over Epochs")
-plt.xlabel("Epoch")
-plt.ylabel("Grad Norm")
-plt.grid(True)
-plt.tight_layout()
-plt.show()
-
-plt.figure()
-plt.plot(df["epoch"], df["train_confidence"], label="Train Conf")
-plt.plot(df["epoch"], df["val_confidence"], label="Val Conf")
-plt.title("Confidence over Epochs")
-plt.xlabel("Epoch")
-plt.ylabel("Confidence")
-plt.legend()
-plt.grid(True)
-plt.tight_layout()
-plt.show()
-
-plt.figure()
-plt.plot(df["epoch"], df["train_roc_auc"], label="Train AUC")
-plt.plot(df["epoch"], df["val_roc_auc"], label="Val AUC")
-plt.title("ROC AUC over Epochs")
-plt.xlabel("Epoch")
-plt.ylabel("AUC")
-plt.legend()
-plt.grid(True)
-plt.tight_layout()
-plt.show()
+# Her metrik için ayrı grafik çiz
+for col in y_cols:
+    plt.figure()
+    plt.plot(df[x_col], df[col], marker="o")
+    plt.title(f"{col} vs {x_col}")
+    plt.xlabel(x_col)
+    plt.ylabel(col)
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
