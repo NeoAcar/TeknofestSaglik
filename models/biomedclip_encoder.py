@@ -35,10 +35,13 @@ class ImageEncoderWithMLP(nn.Module):
         self.encoder = self.model.visual
 
         self.classifier = nn.Sequential(
-            nn.Linear(embed_dim, 2048),
+            nn.Linear(embed_dim, 256),
             nn.ReLU(),
             nn.Dropout(0.3),
-            nn.Linear(2048,1)
+            nn.Linear(256, 64),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Linear(64, 1)
         )
 
 

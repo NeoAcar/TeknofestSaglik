@@ -12,8 +12,8 @@ import pandas as pd
 from tqdm import tqdm
 from datetime import datetime
 
-train_csv = "data/data_paths/train_data.csv"
-val_csv = "data/data_paths/val_data.csv"
+train_csv = "data/data_paths/train_data_clean.csv"
+val_csv = "data/data_paths/val_data_clean.csv"
 
 timestamp = datetime.now().strftime("%Y_%m_%d__%H_%M_%S")
 
@@ -57,7 +57,7 @@ train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
 criterion = nn.BCEWithLogitsLoss()
-optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=lr, weight_decay=weight_decay)
+optimizer = torch.optim.AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=lr, weight_decay=weight_decay)
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", patience=3, factor=0.5)
 
 

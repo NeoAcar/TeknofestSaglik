@@ -8,9 +8,7 @@ from tqdm import tqdm
 input_base = "inme"
 output_base = "inme"
 folders = {
-    "var_iskemi/PNG": "var_iskemi_clean",
-    "var_kanama/PNG": "var_kanama_clean",
-    "yok": "yok_clean"
+    "external_dataset/PNG": "external_clean"
 }
 
 # Temizleme fonksiyonu

@@ -6,3 +6,5 @@ checkpoints/
 configs/
 inme/
 logs/
+eval_logs/
+Brain_Data_Organised/

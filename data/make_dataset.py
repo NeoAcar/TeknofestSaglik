@@ -7,9 +7,9 @@ from sklearn.model_selection import train_test_split
 # Klasör yolları
 base_dir = "inme"
 class_dirs = {
-    "var_iskemi/PNG": 1,
-    "var_kanama/PNG": 1,
-    "yok": 0
+    "var_iskemi_clean": 1,
+    "var_kanama_clean": 1,
+    "yok_clean": 0
 }
 
 # Tüm görüntü yolları ve etiketleri topla
@@ -41,8 +41,8 @@ def save_csv(paths, labels, filename):
     df.to_csv(filename, index=False)
 
 os.makedirs("data/data_paths", exist_ok=True)
-save_csv(train_paths, train_labels, "data/data_paths/train_data.csv")
-save_csv(val_paths, val_labels, "data/data_paths/val_data.csv")
-save_csv(test_paths, test_labels, "data/data_paths/test_data.csv")
+save_csv(train_paths, train_labels, "data/data_paths/train_data_clean.csv")
+save_csv(val_paths, val_labels, "data/data_paths/val_data_clean.csv")
+save_csv(test_paths, test_labels, "data/data_paths/test_data_clean.csv")
 
 print(f"Toplam: {len(image_paths)} | Train: {len(train_paths)} | Val: {len(val_paths)} | Test: {len(test_paths)}")
