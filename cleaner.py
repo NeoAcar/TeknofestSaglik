@@ -4,7 +4,7 @@ import numpy as np
 from multiprocessing import Pool, cpu_count
 from tqdm import tqdm
 
-# Giriş-çıkış klasörleri
+
 input_base = "inme"
 output_base = "inme"
 folders = {
